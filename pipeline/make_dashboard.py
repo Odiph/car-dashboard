@@ -126,6 +126,7 @@ Get a pre-purchase inspection (בדיקת רכב) and ask the seller for the pla
     <label class="f">Search<input id="q" placeholder="trim, city, colour..." style="width:190px"></label>
     <label class="f">Max price<input id="mx" type="range" min="0" max="100" value="100" style="width:150px"><span id="mxv" style="font-size:12px;text-transform:none;letter-spacing:0"></span></label>
     <label class="f">Max km<input id="mk" type="range" min="0" max="100" value="100" style="width:150px"><span id="mkv" style="font-size:12px;text-transform:none;letter-spacing:0"></span></label>
+    <label class="f">Max km/yr<input id="mky" type="range" min="0" max="100" value="100" step="500" style="width:150px"><span id="mkyv" style="font-size:12px;text-transform:none;letter-spacing:0"></span></label>
     <label class="f">Fuel<select id="ff"><option value="">any</option></select></label>
     <label class="f">Min year<select id="fy"><option value="">any</option></select></label>
     <label class="f">Price vs מחירון<select id="fl"><option value="">any</option><option value="-5">5%+ below</option><option value="-10">10%+ below</option><option value="0">at or below</option></select></label>
@@ -333,6 +334,8 @@ function renderTop(){
   const mx=document.getElementById('mx'), mk=document.getElementById('mk');
   mx.min=Math.floor(lo); mx.max=Math.ceil(hi); mx.value=mx.max;
   const kmax=Math.max(...cs.map(c=>c.km||0)); mk.min=0; mk.max=kmax; mk.value=kmax;
+  const mky=document.getElementById('mky');
+  const kymax=Math.ceil(Math.max(...cs.map(c=>c.kmyr||0))/500)*500; mky.min=0; mky.max=kymax; mky.value=kymax;
   document.getElementById('hd').innerHTML = COLS.map(([k,l,n])=>`<th data-k="${k}" class="${n?'n':''}">${l}</th>`).join('');
   document.querySelectorAll('#hd th').forEach(th=>th.onclick=()=>{
     const k=th.dataset.k; if(k==='link')return;
@@ -353,6 +356,7 @@ function renderTop(){
 function renderTable(){
   const q=document.getElementById('q').value.toLowerCase().trim();
   const mx=+document.getElementById('mx').value, mk=+document.getElementById('mk').value;
+  const mky=+document.getElementById('mky').value;
   const ff=document.getElementById('ff').value, fy=document.getElementById('fy').value;
   const fl=document.getElementById('fl').value;
   const fo=document.getElementById('fo').value, fa=document.getElementById('fa').value;
@@ -369,9 +373,10 @@ function renderTable(){
   };
   document.getElementById('mxv').textContent=ils(mx);
   document.getElementById('mkv').textContent=num(mk)+' km';
+  document.getElementById('mkyv').textContent=num(mky)+' km/yr';
   let rows=cars().filter(c=>
     (!q || [c.trim,c.city,c.color,c.fuel,c.region].some(v=>String(v||'').toLowerCase().includes(q))) &&
-    (c.price==null || c.price<=mx) && (c.km==null || c.km<=mk) &&
+    (c.price==null || c.price<=mx) && (c.km==null || c.km<=mk) && (c.kmyr==null || c.kmyr<=mky) &&
     (!ff || c.fuel===ff) && (!fy || c.year>=+fy) &&
     (trimSel.size===0 || trimSel.has(c.tname)) &&
     (!fl || (c.vsList!=null && c.vsList <= +fl/100)) &&
@@ -447,7 +452,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
     ` &nbsp;·&nbsp; <span style="color:var(--bad);font-weight:600">⚠ ${days} days old — the daily refresh may have stopped</span>`;
 })();
 
-['q','mx','mk','ff','fy','fl','fo','fa','fp'].forEach(id=>{
+['q','mx','mk','mky','ff','fy','fl','fo','fa','fp'].forEach(id=>{
   const e=document.getElementById(id);
   // bind BOTH: selects and checkboxes emit 'change', text/range emit 'input'
   e.addEventListener('change', renderTable);
