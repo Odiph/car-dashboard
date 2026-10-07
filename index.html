@@ -44,6 +44,14 @@ a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 /* a contacted row stays readable but recedes; its tick stays full strength */
 tr.cdone td{opacity:.45}
 tr.cdone td:first-child{opacity:1}
+/* collapsible section header (Statistics) */
+.sechead{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;margin:0 0 12px;
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim)}
+.sechead:hover{color:var(--tx)}
+.sechead .caret{display:inline-block;transition:transform .15s;font-size:13px;line-height:1}
+.sechead.closed .caret{transform:rotate(-90deg)}
+.sechead .sechint{text-transform:none;letter-spacing:0;font-size:11.5px;color:#6b7891}
+#statsWrap.hidden{display:none}
 .note{background:rgba(255,193,77,.08);border-left:3px solid var(--warn);padding:11px 13px;border-radius:7px;font-size:12.5px;color:#d9c9a3;margin-bottom:18px}
 .foot{color:#6b7891;font-size:11.5px;margin-top:22px;line-height:1.7}
 .tabs{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
@@ -65,20 +73,27 @@ tr.cdone td:first-child{opacity:1}
 .rbtn[disabled]{opacity:.55;cursor:default;border-color:var(--line);color:var(--dim)}
 </style></head><body><div class="wrap">
 <h1>Hyundai Kona vs Hyundai Ioniq (hybrid) — private sellers, Israel</h1>
-<div class="stamp">Last refreshed <b>Wed 07 Oct 2026, 12:52</b> &nbsp;·&nbsp; refreshes daily at 10:00 <span id="agewarn"></span>
+<div class="stamp">Last refreshed <b>Wed 07 Oct 2026, 13:17</b> &nbsp;·&nbsp; refreshes daily at 10:00 <span id="agewarn"></span>
   <button id="reloadBtn" class="rbtn" title="Re-fetch this page, bypassing the browser and CDN cache. The data itself is rebuilt by the 03:00 task — this only makes sure you are looking at the newest published build.">↻ Refresh</button></div>
 <div class="sub" id="sub"></div>
 <div class="tabs" id="tabs"></div>
 <div class="note"><b>Before you fall for one:</b> Yad2 never publishes service history or accident history — they are not in any listing.
 Get a pre-purchase inspection (בדיקת רכב) and ask the seller for the plate number (מספר רכב) so the gov.il ownership &amp; lien record can be checked.</div>
-<div class="kpis" id="kpis"></div>
-<div class="row">
-  <div class="panel"><h2>Price distribution</h2><div class="bars" id="hist"></div></div>
-  <div class="panel"><h2>Model year</h2><div class="bars" id="years"></div></div>
+<div class="sechead" id="statsToggle" role="button" tabindex="0" aria-expanded="true" aria-controls="statsWrap"
+     title="Show or hide the summary statistics — remembered on this device">
+  <span class="caret" id="statsCaret">▾</span><span>Statistics</span>
+  <span class="sechint" id="statsHint"></span>
 </div>
-<div class="row">
-  <div class="panel"><h2>Fuel</h2><div class="bars" id="fuel"></div></div>
-  <div class="panel"><h2>Where the cars are</h2><div class="bars" id="regions"></div></div>
+<div id="statsWrap">
+  <div class="kpis" id="kpis"></div>
+  <div class="row">
+    <div class="panel"><h2>Price distribution</h2><div class="bars" id="hist"></div></div>
+    <div class="panel"><h2>Model year</h2><div class="bars" id="years"></div></div>
+  </div>
+  <div class="row">
+    <div class="panel"><h2>Fuel</h2><div class="bars" id="fuel"></div></div>
+    <div class="panel"><h2>Where the cars are</h2><div class="bars" id="regions"></div></div>
+  </div>
 </div>
 <div class="panel">
   <h2>Every listing</h2>
@@ -153,6 +168,35 @@ let contacted = {};
 try { contacted = JSON.parse(localStorage.getItem(CKEY) || '{}') || {}; } catch (e) { contacted = {}; }
 function saveContacted(){ try { localStorage.setItem(CKEY, JSON.stringify(contacted)); } catch (e) {} }
 function isDone(id){ return !!contacted[id]; }
+
+// ---- collapsible Statistics section ----
+// Collapsed state persists per device (same reasoning as the contacted ticks: the page is
+// rebuilt from scratch daily, so anything held only in memory is lost on every refresh).
+const SKEY = 'carDash_statsCollapsed_v1';
+function applyStats(collapsed){
+  const head = document.getElementById('statsToggle');
+  const wrap = document.getElementById('statsWrap');
+  if(!head || !wrap) return;
+  head.classList.toggle('closed', collapsed);
+  wrap.classList.toggle('hidden', collapsed);
+  head.setAttribute('aria-expanded', String(!collapsed));
+  document.getElementById('statsCaret').textContent = collapsed ? '▸' : '▾';
+  // when collapsed, surface the one number worth seeing without expanding
+  document.getElementById('statsHint').textContent = collapsed ? '(hidden — click to show)' : '';
+}
+function initStats(){
+  let collapsed = false;
+  try { collapsed = localStorage.getItem(SKEY) === '1'; } catch (e) {}
+  applyStats(collapsed);
+  const head = document.getElementById('statsToggle');
+  const flip = () => {
+    const now = !document.getElementById('statsWrap').classList.contains('hidden');
+    applyStats(now);
+    try { localStorage.setItem(SKEY, now ? '1' : '0'); } catch (e) {}
+  };
+  head.addEventListener('click', flip);
+  head.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); flip(); } });
+}
 function toggleContacted(id, on){
   if(on) contacted[id] = 1; else delete contacted[id];
   saveContacted();
@@ -415,7 +459,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 });
 // If the scheduled refresh dies, the page must SAY it is stale rather than look current.
 (function(){
-  const built = new Date("2026-10-07T12:52:47.134802+03:00");
+  const built = new Date("2026-10-07T13:17:16.333083+03:00");
   if(isNaN(built)) return;
   const days = Math.floor((Date.now()-built)/864e5);
   if(days >= 2) document.getElementById('agewarn').innerHTML =
@@ -444,4 +488,5 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   e.addEventListener('change', renderTable);
   if(e.tagName==='INPUT' && e.type!=='checkbox') e.addEventListener('input', renderTable); });
 renderTop();
+initStats();
 </script></body></html>
