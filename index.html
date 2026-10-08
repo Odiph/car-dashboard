@@ -73,7 +73,7 @@ tr.cdone td:first-child{opacity:1}
 .rbtn[disabled]{opacity:.55;cursor:default;border-color:var(--line);color:var(--dim)}
 </style></head><body><div class="wrap">
 <h1>Hyundai Kona vs Hyundai Ioniq (hybrid) — private sellers, Israel</h1>
-<div class="stamp">Last refreshed <b>Thu 08 Oct 2026, 11:46</b> &nbsp;·&nbsp; refreshes daily at 10:00 <span id="agewarn"></span>
+<div class="stamp">Last refreshed <b>Thu 08 Oct 2026, 12:12</b> &nbsp;·&nbsp; refreshes daily at 10:00 <span id="agewarn"></span>
   <button id="reloadBtn" class="rbtn" title="Re-fetch this page, bypassing the browser and CDN cache. The data itself is rebuilt by the 03:00 task — this only makes sure you are looking at the newest published build.">↻ Refresh</button></div>
 <div class="sub" id="sub"></div>
 <div class="tabs" id="tabs"></div>
@@ -459,7 +459,7 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
 });
 // If the scheduled refresh dies, the page must SAY it is stale rather than look current.
 (function(){
-  const built = new Date("2026-10-08T11:46:52.742041+03:00");
+  const built = new Date("2026-10-08T12:12:21.338321+03:00");
   if(isNaN(built)) return;
   const days = Math.floor((Date.now()-built)/864e5);
   if(days >= 2) document.getElementById('agewarn').innerHTML =
